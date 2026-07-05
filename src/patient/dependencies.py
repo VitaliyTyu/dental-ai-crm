@@ -17,10 +17,10 @@ def get_patient_service(db: SessionDep) -> PatientService:
 PatientServiceDep = Annotated[PatientService, Depends(get_patient_service)]
 
 
-async def valid_patient_id(
+async def get_valid_patient(
     patient_id: int, service: PatientServiceDep
 ) -> Patient:
     return await service.get_patient_by_id(patient_id)
 
 
-ValidPatientDep = Annotated[Patient, Depends(valid_patient_id)]
+ValidPatientDep = Annotated[Patient, Depends(get_valid_patient)]

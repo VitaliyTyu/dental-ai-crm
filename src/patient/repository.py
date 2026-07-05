@@ -15,7 +15,9 @@ class PatientRepository:
         return await self.db.get(Patient, patient_id)
 
     async def get_by_phone(self, phone: str) -> Patient | None:
-        result = await self.db.execute(select(Patient).where(Patient.phone == phone))
+        result = await self.db.execute(
+            select(Patient).where(Patient.phone == phone)
+        )
         return result.scalar_one_or_none()
 
     async def get_all(self) -> list[Patient]:
@@ -28,7 +30,7 @@ class PatientRepository:
         await self.db.refresh(patient)
         return patient
 
-    async def update(self, patient: Patient, data: Mapping[str, Any]):
+    async def update(self, patient: Patient, data: Mapping[str, Any]) -> Patient:
         for field, value in data.items():
             setattr(patient, field, value)
         await self.db.flush()

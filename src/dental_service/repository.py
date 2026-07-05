@@ -1,3 +1,6 @@
+from collections.abc import Mapping
+from typing import Any
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -28,3 +31,16 @@ class DentalServiceRepository:
         await self.db.flush()
         await self.db.refresh(service)
         return service
+
+    async def update(
+        self, dental_service: DentalService, data: Mapping[str, Any]
+    ) -> DentalService:
+        for field, value in data.items():
+            setattr(dental_service, field, value)
+        await self.db.flush()
+        await self.db.refresh(dental_service)
+        return dental_service
+
+    async def delete(self, dental_service: DentalService) -> None:
+        await self.db.delete(dental_service)
+        await self.db.flush()

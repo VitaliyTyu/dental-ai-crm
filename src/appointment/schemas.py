@@ -6,7 +6,7 @@ from src.appointment.models import AppointmentStatus
 from src.models import CustomModel
 
 
-class CreateAppointment(CustomModel):
+class AppointmentCreate(CustomModel):
     patient_id: int
     doctor_id: int
     dental_service_id: int
@@ -16,10 +16,11 @@ class CreateAppointment(CustomModel):
 
 
 class AppointmentMove(CustomModel):
-    new_strart_time: datetime
+    new_start_time: datetime
+    new_end_time: datetime
 
 
-class ReadAppointment(CustomModel):
+class AppointmentRead(CustomModel):
     id: int
     patient_id: int
     doctor_id: int

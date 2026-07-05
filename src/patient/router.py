@@ -10,21 +10,21 @@ patient_router = APIRouter(prefix="/patients", tags=["patients"])
     "",
     response_model=PatientRead,
     status_code=status.HTTP_201_CREATED,
-    summary="Create patient",
+    summary="Создать пациента",
 )
-async def create_patient(
-    data: PatientCreate, patient_service: PatientServiceDep
-):
+async def create_patient(data: PatientCreate, patient_service: PatientServiceDep):
     return await patient_service.create_patient(data)
 
 
-@patient_router.get("", response_model=list[PatientRead], summary="Get patients")
+@patient_router.get(
+    "", response_model=list[PatientRead], summary="Получить всех пациентов"
+)
 async def get_patients(patient_service: PatientServiceDep):
     return await patient_service.get_patients()
 
 
 @patient_router.get(
-    "/{patient_id}", response_model=PatientRead, summary="Get patient by id"
+    "/{patient_id}", response_model=PatientRead, summary="Получить пациента по id"
 )
 async def get_patient(patient: ValidPatientDep):
     return patient
@@ -33,14 +33,16 @@ async def get_patient(patient: ValidPatientDep):
 @patient_router.get(
     "/by-phone/{phone}",
     response_model=PatientRead,
-    summary="Get patient by phone",
+    summary="Получить пациента по номеру телефона",
 )
 async def get_patient_by_phone(phone: str, patient_service: PatientServiceDep):
     return await patient_service.get_patient_by_phone(phone)
 
 
 @patient_router.patch(
-    "/{patient_id}", response_model=PatientRead, summary="Update patient data"
+    "/{patient_id}",
+    response_model=PatientRead,
+    summary="Обновить данные пациента",
 )
 async def update_pateient(
     patient_id: int, data: PatientUpdate, patient_service: PatientServiceDep
@@ -49,9 +51,7 @@ async def update_pateient(
 
 
 @patient_router.delete(
-    "/{patient_id}",
-    response_model=bool,
-    summary="Delete patient by id"
+    "/{patient_id}", response_model=bool, summary="Удалить пациента по id"
 )
 async def delete_patient(patient_id: int, patient_service: PatientServiceDep):
     return await patient_service.delete_patient(patient_id)

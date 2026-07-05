@@ -4,7 +4,7 @@ from pydantic import Field
 from src.models import CustomModel
 
 
-class CreateDentalService(CustomModel):
+class DentalServiceCreate(CustomModel):
     name: str = Field(min_length=1, max_length=255)
     description: str | None = None
     price_from: int
@@ -12,7 +12,7 @@ class CreateDentalService(CustomModel):
     duration_minutes: int
 
 
-class UpdateDentalService(CustomModel):
+class DentalServiceUpdate(CustomModel):
     name: str | None = Field(default=None, min_length=1, max_length=255)
     description: str | None = None
     price_from: int | None = None
@@ -21,7 +21,7 @@ class UpdateDentalService(CustomModel):
     is_active: bool | None = None
 
 
-class ReadDentalService(CustomModel):
+class DentalServiceRead(CustomModel):
     id: int
     name: str
     description: str | None = None

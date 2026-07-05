@@ -41,7 +41,7 @@ class AppointmentRepository:
                 Appointment.start_time < end_time,
                 Appointment.end_time > start_time,
             ),
-        )
+        ).limit(1)
 
         if exclude_appointment_id is not None:
             query = query.where(Appointment.id != exclude_appointment_id)
