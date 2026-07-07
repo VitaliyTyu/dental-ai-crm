@@ -1,9 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.dental_service.exceptions import DentalServiceNotFoundException
 from src.dental_service.models import DentalService
 from src.dental_service.repository import DentalServiceRepository
 from src.dental_service.schemas import DentalServiceCreate, DentalServiceUpdate
-from src.exceptions import NotFoundException
 
 
 class DentalServiceService:
@@ -18,7 +18,7 @@ class DentalServiceService:
             dental_service_id
         )
         if dental_service is None:
-            raise NotFoundException("Услуга не найдена")
+            raise DentalServiceNotFoundException()
         return dental_service
 
     async def get_dental_services(self) -> list[DentalService]:

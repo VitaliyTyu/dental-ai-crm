@@ -14,6 +14,16 @@ class DentalServiceRepository:
     async def get_by_id(self, service_id: int) -> DentalService | None:
         return await self.db.get(DentalService, service_id)
 
+    async def get_by_ids(self, serivice_ids: list[int]) -> list[DentalService]:
+        if not serivice_ids:
+            return []
+
+        result = await self.db.execute(
+            select(DentalService).where(DentalService.id.in_(serivice_ids))
+        )
+        
+        return list(result.scalars().all())
+
     async def get_by_name(self, name: str) -> DentalService | None:
         result = await self.db.execute(
             select(DentalService).where(DentalService.name == name)

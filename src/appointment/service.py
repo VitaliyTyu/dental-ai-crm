@@ -19,18 +19,28 @@ class AppointmentService:
 
     async def book_appointment(self, data: AppointmentCreate) -> Appointment:
         patient = await self.patient_repository.get_by_id(data.patient_id)
+        
         if not patient:
             raise NotFoundException("Пациент не найден")
 
         doctor = await self.doctor_repository.get_by_id(data.doctor_id)
+        
         if not doctor:
             raise NotFoundException("Доктор не найден")
 
         dental_service = await self.dental_service_repository.get_by_id(
             data.dental_service_id
         )
+        
         if not dental_service:
             raise NotFoundException("Услуга не найдена")
+
+        can_provide_service = await self.doctor_repository.can_privide_service(
+            data.doctor_id, data.dental_service_id
+        )
+        
+        if not can_provide_service:
+            raise ConflictException("Доктор не предоставляет данную услугу")
 
         has_doctor_conflict = (
             await self.appointment_repository.has_doctor_conflict(
@@ -45,6 +55,7 @@ class AppointmentService:
         appointment = await self.appointment_repository.create(
             Appointment(**data.model_dump())
         )
+        
         await self.db.commit()
 
         return appointment
@@ -97,11 +108,11 @@ class AppointmentService:
 
         if not patient:
             raise NotFoundException("Пациент не найден")
-        
+
         appointments = (
             await self.appointment_repository.get_patient_active_appointments(
                 patient_id
             )
         )
-        
+
         return appointments

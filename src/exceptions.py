@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 
 class AppException(Exception):
     status_code = 400
-    detail = "Application error"
+    detail = "Ошибка приложения"
 
     def __init__(self, detail: str | None = None):
         self.detail = detail or self.detail
@@ -13,12 +13,12 @@ class AppException(Exception):
 
 class NotFoundException(AppException):
     status_code = 404
-    detail = "Entity not found"
+    detail = "Объект не найден"
 
 
 class ConflictException(AppException):
     status_code = 409
-    detail = "Conflict"
+    detail = "Конфликт"
 
 
 async def app_exception_handler(

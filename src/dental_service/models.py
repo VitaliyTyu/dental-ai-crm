@@ -1,8 +1,7 @@
-
-
 from sqlalchemy import Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from src.doctor.models import doctor_dental_service
 from src.models import Base
 
 
@@ -18,3 +17,9 @@ class DentalService(Base):
     is_active: Mapped[bool] = mapped_column(default=True)
 
     appointments = relationship("Appointment", back_populates="dental_service")
+
+    doctors = relationship(
+        "Doctor",
+        secondary=doctor_dental_service,
+        back_populates="dental_services",
+    )

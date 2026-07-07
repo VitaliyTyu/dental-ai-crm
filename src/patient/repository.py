@@ -39,3 +39,4 @@ class PatientRepository:
 
     async def delete(self, patient: Patient) -> None:
         await self.db.delete(patient)
+        await self.db.flush()
