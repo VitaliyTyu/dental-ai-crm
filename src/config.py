@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     app_name: str = "Dental AI CRM"
     environment: Environment = Environment.LOCAL
     database_url: str = ""
+    openrouter_api_key: str = ""
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    openrouter_model: str = "qwen/qwen3.7-plus"
+    clinic_timezone: str = "Asia/Yekaterinburg"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
