@@ -1,11 +1,21 @@
+from datetime import date, datetime, timedelta
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.appointment.exceptions import AppointmentNotFoundException
 from src.appointment.models import Appointment, AppointmentStatus
 from src.appointment.repository import AppointmentRepository
-from src.appointment.schemas import AppointmentCreate, AppointmentMove
+from src.appointment.schemas import (
+    AppointmentCreate,
+    AppointmentMove,
+    AppointmentSlotRead,
+)
+from src.dental_service.exceptions import DentalServiceNotFoundException
 from src.dental_service.repository import DentalServiceRepository
+from src.doctor.exceptions import DoctorNotFoundException
 from src.doctor.repository import DoctorRepository
 from src.exceptions import ConflictException, NotFoundException
+from src.patient.exceptions import PatientNotFoundException
 from src.patient.repository import PatientRepository
 
 
@@ -19,26 +29,26 @@ class AppointmentService:
 
     async def book_appointment(self, data: AppointmentCreate) -> Appointment:
         patient = await self.patient_repository.get_by_id(data.patient_id)
-        
+
         if not patient:
-            raise NotFoundException("Пациент не найден")
+            raise PatientNotFoundException()
 
         doctor = await self.doctor_repository.get_by_id(data.doctor_id)
-        
+
         if not doctor:
-            raise NotFoundException("Доктор не найден")
+            raise DoctorNotFoundException()
 
         dental_service = await self.dental_service_repository.get_by_id(
             data.dental_service_id
         )
-        
+
         if not dental_service:
-            raise NotFoundException("Услуга не найдена")
+            raise DentalServiceNotFoundException()
 
         can_provide_service = await self.doctor_repository.can_privide_service(
             data.doctor_id, data.dental_service_id
         )
-        
+
         if not can_provide_service:
             raise ConflictException("Доктор не предоставляет данную услугу")
 
@@ -55,7 +65,7 @@ class AppointmentService:
         appointment = await self.appointment_repository.create(
             Appointment(**data.model_dump())
         )
-        
+
         await self.db.commit()
 
         return appointment
@@ -66,7 +76,7 @@ class AppointmentService:
         appointment = await self.appointment_repository.get_by_id(appointment_id)
 
         if not appointment:
-            raise NotFoundException("Встреча не найдена")
+            raise AppointmentNotFoundException()
 
         if appointment.status is not AppointmentStatus.scheduled:
             raise ConflictException(
@@ -94,7 +104,7 @@ class AppointmentService:
         appointment = await self.appointment_repository.get_by_id(appointment_id)
 
         if not appointment:
-            raise NotFoundException("Встреча не найдена")
+            raise AppointmentNotFoundException()
 
         appointment.status = AppointmentStatus.cancelled
         await self.db.commit()
@@ -107,7 +117,7 @@ class AppointmentService:
         patient = await self.patient_repository.get_by_id(patient_id)
 
         if not patient:
-            raise NotFoundException("Пациент не найден")
+            raise PatientNotFoundException()
 
         appointments = (
             await self.appointment_repository.get_patient_active_appointments(
@@ -116,3 +126,66 @@ class AppointmentService:
         )
 
         return appointments
+
+    async def get_free_slots(
+        self, dental_service_id: int, target_date: date
+    ) -> list[AppointmentSlotRead]:
+        dental_service = await self.dental_service_repository.get_by_id(
+            dental_service_id
+        )
+
+        if not dental_service:
+            raise DentalServiceNotFoundException()
+
+        doctors = await self.doctor_repository.get_doctors_by_service_id(
+            dental_service_id
+        )
+
+        slots: list[AppointmentSlotRead] = []
+
+        for doctor in doctors:
+            working_hours = (
+                await self.doctor_repository.get_working_hours_for_date(
+                    doctor.id, target_date
+                )
+            )
+
+            appointments = await self.appointment_repository.get_doctor_appointments_for_date(
+                doctor.id, target_date
+            )
+
+            for working_hour in working_hours:
+                current_start = datetime.combine(
+                    target_date, working_hour.start_time
+                )
+                work_end = datetime.combine(target_date, working_hour.end_time)
+
+                while (
+                    current_start
+                    + timedelta(minutes=dental_service.duration_minutes)
+                    <= work_end
+                ):
+                    current_end = current_start + timedelta(
+                        minutes=dental_service.duration_minutes
+                    )
+
+                    has_conflict = any(
+                        appoinment.start_time < current_end
+                        and appoinment.end_time > current_start
+                        for appoinment in appointments
+                    )
+
+                    if not has_conflict:
+                        slots.append(
+                            AppointmentSlotRead(
+                                doctor_id=doctor.id,
+                                dental_service_id=dental_service_id,
+                                doctor_name=doctor.name,
+                                start_time=current_start,
+                                end_time=current_end,
+                            )
+                        )
+
+                    current_start += timedelta(minutes=30)
+
+        return slots

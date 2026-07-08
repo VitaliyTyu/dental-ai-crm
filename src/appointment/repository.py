@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime, time
 
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -55,3 +55,24 @@ class AppointmentRepository:
         await self.db.flush()
         await self.db.refresh(appointment)
         return appointment
+
+    async def get_doctor_appointments_for_date(
+        self,
+        doctor_id: int,
+        target_date: date
+    ) -> list[Appointment]:
+        day_start = datetime.combine(target_date, time.min)
+        day_end = datetime.combine(target_date, time.max)
+        
+        result = await self.db.execute(
+            select(Appointment)
+            .where(
+                Appointment.doctor_id == doctor_id,
+                Appointment.start_time > day_start,
+                Appointment.end_time < day_end,
+                Appointment.status == AppointmentStatus.scheduled
+            )
+            .order_by(Appointment.start_time)
+        )
+        
+        return list(result.scalars().all())        

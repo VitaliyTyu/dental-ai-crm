@@ -29,3 +29,11 @@ class AppointmentRead(CustomModel):
     end_time: datetime
     status: AppointmentStatus
     comment: str | None = None
+
+
+class AppointmentSlotRead(CustomModel):
+    doctor_id: int
+    doctor_name: str
+    dental_service_id: int
+    start_time: datetime
+    end_time: datetime

@@ -1,4 +1,5 @@
 from collections.abc import Mapping
+from datetime import date
 from typing import Any
 
 from sqlalchemy import select
@@ -6,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.dental_service.models import DentalService
-from src.doctor.models import Doctor, doctor_dental_service
+from src.doctor.models import Doctor, DoctorWorkingHour, doctor_dental_service
 
 
 class DoctorRepository:
@@ -16,7 +17,10 @@ class DoctorRepository:
     async def get_by_id(self, doctor_id: int) -> Doctor | None:
         result = await self.db.execute(
             select(Doctor)
-            .options(selectinload(Doctor.dental_services))
+            .options(
+                selectinload(Doctor.dental_services),
+                selectinload(Doctor.working_hours),
+            )
             .where(Doctor.id == doctor_id)
         )
 
@@ -25,7 +29,10 @@ class DoctorRepository:
     async def get_all(self) -> list[Doctor]:
         result = await self.db.execute(
             select(Doctor)
-            .options(selectinload(Doctor.dental_services))
+            .options(
+                selectinload(Doctor.dental_services),
+                selectinload(Doctor.working_hours),
+            )
             .order_by(Doctor.id)
         )
         return list(result.scalars().all())
@@ -33,7 +40,10 @@ class DoctorRepository:
     async def get_active(self) -> list[Doctor]:
         result = await self.db.execute(
             select(Doctor)
-            .options(selectinload(Doctor.dental_services))
+            .options(
+                selectinload(Doctor.dental_services),
+                selectinload(Doctor.working_hours),
+            )
             .where(Doctor.is_active.is_(True))
             .order_by(Doctor.id)
         )
@@ -50,6 +60,7 @@ class DoctorRepository:
         doctor: Doctor,
         data: Mapping[str, Any],
         dental_services: list[DentalService] | None,
+        working_hours: list[DoctorWorkingHour] | None,
     ) -> Doctor:
         for field, value in data.items():
             setattr(doctor, field, value)
@@ -57,8 +68,13 @@ class DoctorRepository:
         if dental_services is not None:
             doctor.dental_services = dental_services
 
+        if working_hours is not None:
+            doctor.working_hours = working_hours
+
         await self.db.flush()
-        await self.db.refresh(doctor, attribute_names={"dental_services"})
+        await self.db.refresh(
+            doctor, attribute_names=["dental_services", "working_hours"]
+        )
 
         return doctor
 
@@ -71,6 +87,36 @@ class DoctorRepository:
         )
 
         return result.first() is not None
+
+    async def get_doctors_by_service_id(
+        self, dental_service_id: int
+    ) -> list[Doctor]:
+        result = await self.db.execute(
+            select(Doctor)
+            .options(
+                selectinload(Doctor.dental_services),
+                selectinload(Doctor.working_hours),
+            )
+            .where(
+                Doctor.is_active.is_(True),
+                Doctor.dental_services.any(id=dental_service_id),
+            )
+        )
+
+        return list(result.scalars().all())
+
+    async def get_working_hours_for_date(
+        self, doctor_id: int, target_date: date
+    ) -> list[DoctorWorkingHour]:
+        result = await self.db.execute(
+            select(DoctorWorkingHour).where(
+                DoctorWorkingHour.doctor_id == doctor_id,
+                DoctorWorkingHour.weekday == target_date.weekday(),
+                DoctorWorkingHour.is_active.is_(True),
+            )
+        )
+
+        return list(result.scalars().all())
 
     async def delete(self, doctor: Doctor):
         await self.db.delete(doctor)

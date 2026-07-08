@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.exceptions import ConflictException, NotFoundException
+from src.patient.exceptions import PatientNotFoundException
 from src.patient.models import Patient
 from src.patient.repository import PatientRepository
 from src.patient.schemas import PatientCreate, PatientUpdate
@@ -28,13 +29,13 @@ class PatientService:
     async def get_patient_by_id(self, patient_id: int) -> Patient:
         patient = await self.patient_repository.get_by_id(patient_id)
         if patient is None:
-            raise NotFoundException("Пациент не найден")
+            raise PatientNotFoundException()
         return patient
 
     async def get_patient_by_phone(self, phone: str) -> Patient:
         patient = await self.patient_repository.get_by_phone(phone)
         if patient is None:
-            raise NotFoundException("Пациент не найден")
+            raise PatientNotFoundException()
         return patient
 
     async def update_patient(

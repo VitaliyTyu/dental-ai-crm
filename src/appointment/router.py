@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import APIRouter, status
 
 from src.appointment.dependencies import AppointmentServiceDep
@@ -5,6 +7,7 @@ from src.appointment.schemas import (
     AppointmentCreate,
     AppointmentMove,
     AppointmentRead,
+    AppointmentSlotRead,
 )
 
 appointment_router = APIRouter(prefix="/appointments", tags=["appointments"])
@@ -56,3 +59,18 @@ async def get_patient_active_appointments(
     patient_id: int, appointment_service: AppointmentServiceDep
 ):
     return await appointment_service.get_patient_active_appointments(patient_id)
+
+
+@appointment_router.get(
+    "/free-slots",
+    response_model=list[AppointmentSlotRead],
+    summary="Свободные слоты для записи",
+)
+async def get_free_slots(
+    dental_service_id: int,
+    target_date: datetime,
+    appointment_service: AppointmentServiceDep,
+):
+    return await appointment_service.get_free_slots(
+        dental_service_id, target_date
+    )
