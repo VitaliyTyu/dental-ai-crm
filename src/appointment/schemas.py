@@ -11,7 +11,7 @@ class AppointmentCreate(CustomModel):
     doctor_id: int
     dental_service_id: int
     start_time: datetime
-    end_time: datetime
+    end_time: datetime | None = None
     comment: str | None = None
 
 

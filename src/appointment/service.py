@@ -52,6 +52,11 @@ class AppointmentService:
         if not can_provide_service:
             raise ConflictException("Доктор не предоставляет данную услугу")
 
+        if data.end_time is None:
+            data.end_time = data.start_time + timedelta(
+                minutes=dental_service.duration_minutes
+            )
+
         has_doctor_conflict = (
             await self.appointment_repository.has_doctor_conflict(
                 data.doctor_id,
@@ -59,6 +64,7 @@ class AppointmentService:
                 data.end_time,
             )
         )
+        
         if has_doctor_conflict:
             raise ConflictException("Время для встречи занято")
 

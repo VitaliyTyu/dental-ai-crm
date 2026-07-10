@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.exceptions import ConflictException, NotFoundException
+from src.exceptions import ConflictException
 from src.patient.exceptions import PatientNotFoundException
 from src.patient.models import Patient
 from src.patient.repository import PatientRepository
@@ -13,14 +13,19 @@ class PatientService:
         self.patient_repository = PatientRepository(db)
 
     async def create_patient(self, data: PatientCreate) -> Patient:
-        existing = await self.patient_repository.get_by_phone(data.phone)
+        phone = self._normalize_phone(data.phone)
+        existing = await self.patient_repository.get_by_phone(phone)
+        
         if existing is not None:
             raise ConflictException(
                 "Пациент с таким номером телефона уже существует"
             )
-        patient = Patient(phone=data.phone, name=data.name, notes=data.notes)
+            
+        patient = Patient(phone=phone, name=data.name, notes=data.notes)
         patient = await self.patient_repository.create(patient)
+        
         await self.db.commit()
+        
         return patient
 
     async def get_patients(self) -> list[Patient]:
@@ -32,10 +37,25 @@ class PatientService:
             raise PatientNotFoundException()
         return patient
 
-    async def get_patient_by_phone(self, phone: str) -> Patient:
+    async def get_or_create_by_phone(self, data: PatientCreate) -> Patient:
+        phone = self._normalize_phone(data.phone)
         patient = await self.patient_repository.get_by_phone(phone)
+
+        if patient is None:
+            patient = Patient(phone=phone, name=data.name, notes=data.notes)
+            patient = await self.patient_repository.create(patient)
+            await self.db.commit()
+
+        return patient
+
+    async def get_patient_by_phone(self, phone: str) -> Patient:
+        patient = await self.patient_repository.get_by_phone(
+            self._normalize_phone(phone)
+        )
+        
         if patient is None:
             raise PatientNotFoundException()
+        
         return patient
 
     async def update_patient(
@@ -52,3 +72,14 @@ class PatientService:
         await self.patient_repository.delete(patient)
         await self.db.commit()
         return True
+    
+    def _normalize_phone(self, phone: str) -> str:
+        digits = "".join(char for char in phone if char.isdigit())
+
+        if digits.startswith("00"):
+            digits = digits[2:]
+
+        if len(digits) == 11 and digits.startswith("8"):
+            return "7" + digits[1:]
+
+        return digits

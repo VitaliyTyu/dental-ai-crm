@@ -3,6 +3,7 @@ from typing import Any
 from fastapi import FastAPI
 
 import src.models_registry  # noqa: F401
+from src.ai_agent.router import ai_agent_router
 from src.appointment.router import appointment_router
 from src.config import Environment, settings
 from src.dental_service.router import dental_service_router
@@ -27,6 +28,7 @@ def create_app() -> FastAPI:
     app.include_router(doctor_router)
     app.include_router(dental_service_router)
     app.include_router(appointment_router)
+    app.include_router(ai_agent_router)
 
     @app.get("/health", tags=["system"])
     async def health():

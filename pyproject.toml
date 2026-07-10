@@ -8,13 +8,17 @@ dependencies = [
     "alembic>=1.18.5",
     "asyncpg>=0.31.0",
     "fastapi>=0.138.2",
+    "langchain>=1.3.11",
     "langchain-core>=1.4.8",
     "langchain-openapi>=0.1.1",
+    "langchain-openrouter>=0.2.6",
     "langgraph>=1.2.8",
+    "openai>=2.44.0",
     "psycopg2-binary>=2.9.12",
     "pydantic-settings>=2.14.2",
     "python-dotenv>=1.2.2",
     "sqlalchemy>=2.0.51",
+    "tzdata>=2026.2",
     "uvicorn>=0.49.0",
 ]
 
