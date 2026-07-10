@@ -9,10 +9,13 @@ from src.config import Environment, settings
 from src.dental_service.router import dental_service_router
 from src.doctor.router import doctor_router
 from src.exceptions import AppException, app_exception_handler
+from src.logging_config import configure_ai_agent_logging
 from src.patient.router import patient_router
 
 
 def create_app() -> FastAPI:
+    configure_ai_agent_logging()
+
     app_kwargs: dict[str, Any] = {
         "title": settings.app_name,
     }

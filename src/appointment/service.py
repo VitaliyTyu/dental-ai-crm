@@ -1,4 +1,5 @@
 from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,11 +11,12 @@ from src.appointment.schemas import (
     AppointmentMove,
     AppointmentSlotRead,
 )
+from src.config import settings
 from src.dental_service.exceptions import DentalServiceNotFoundException
 from src.dental_service.repository import DentalServiceRepository
 from src.doctor.exceptions import DoctorNotFoundException
 from src.doctor.repository import DoctorRepository
-from src.exceptions import ConflictException, NotFoundException
+from src.exceptions import ConflictException
 from src.patient.exceptions import PatientNotFoundException
 from src.patient.repository import PatientRepository
 
@@ -148,6 +150,7 @@ class AppointmentService:
         )
 
         slots: list[AppointmentSlotRead] = []
+        clinic_timezone = ZoneInfo(settings.clinic_timezone)
 
         for doctor in doctors:
             working_hours = (
@@ -156,15 +159,18 @@ class AppointmentService:
                 )
             )
 
-            appointments = await self.appointment_repository.get_doctor_appointments_for_date(
-                doctor.id, target_date
+            get_doctor_appointments = (
+                self.appointment_repository.get_doctor_appointments_for_date
             )
+            appointments = await get_doctor_appointments(doctor.id, target_date)
 
             for working_hour in working_hours:
                 current_start = datetime.combine(
-                    target_date, working_hour.start_time
+                    target_date, working_hour.start_time, tzinfo=clinic_timezone
                 )
-                work_end = datetime.combine(target_date, working_hour.end_time)
+                work_end = datetime.combine(
+                    target_date, working_hour.end_time, tzinfo=clinic_timezone
+                )
 
                 while (
                     current_start

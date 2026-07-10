@@ -1,9 +1,11 @@
 from datetime import date, datetime, time
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.appointment.models import Appointment, AppointmentStatus
+from src.config import settings
 
 
 class AppointmentRepository:
@@ -61,8 +63,13 @@ class AppointmentRepository:
         doctor_id: int,
         target_date: date
     ) -> list[Appointment]:
-        day_start = datetime.combine(target_date, time.min)
-        day_end = datetime.combine(target_date, time.max)
+        clinic_timezone = ZoneInfo(settings.clinic_timezone)
+        day_start = datetime.combine(
+            target_date, time.min, tzinfo=clinic_timezone
+        )
+        day_end = datetime.combine(
+            target_date, time.max, tzinfo=clinic_timezone
+        )
         
         result = await self.db.execute(
             select(Appointment)
@@ -75,4 +82,4 @@ class AppointmentRepository:
             .order_by(Appointment.start_time)
         )
         
-        return list(result.scalars().all())        
+        return list(result.scalars().all())
