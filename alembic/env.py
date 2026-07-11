@@ -5,7 +5,7 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-import src.models_registry
+import src.models_registry  # noqa: F401
 from alembic import context
 from src.config import settings
 from src.models import Base

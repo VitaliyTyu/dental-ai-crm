@@ -11,3 +11,4 @@ wheels/
 test_projects/
 .env
 logs/
+docs_for_ai/
